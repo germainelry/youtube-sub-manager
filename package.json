@@ -1,0 +1,58 @@
+{
+  "name": "youtube-sub-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension to find and clean up stale YouTube subscriptions — scan, filter, bulk unsubscribe, export.",
+  "license": "MIT",
+  "author": "Germaine Luah",
+  "homepage": "https://github.com/germainelry/youtube-sub-manager",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/germainelry/youtube-sub-manager.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "youtube",
+    "subscriptions",
+    "cleanup",
+    "unsubscribe",
+    "browser-extension",
+    "manifest-v3"
+  ],
+  "type": "module",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,html,json}\"",
+    "verify": "prettier --check \"src/**/*.{ts,tsx,css,html,json}\" && eslint \"src/**/*.{ts,tsx}\" && vitest run && tsc --noEmit && vite build"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.13.26",
+    "dexie": "^4.0.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.25",
+    "@types/chrome": "^0.0.270",
+    "@types/node": "^25.9.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.35.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "happy-dom": "^15.7.4",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.6",
+    "vitest": "^2.1.1"
+  }
+}

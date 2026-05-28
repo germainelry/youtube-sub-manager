@@ -1,0 +1,366 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    'Roboto',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  width: 320px;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 18px 16px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.header .subtitle {
+  font-size: 11px;
+  color: var(--c-text-secondary);
+}
+
+.summary {
+  font-size: 12px;
+  color: var(--c-text-secondary);
+  background: var(--c-bg-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary .count {
+  color: var(--c-text);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg-surface);
+  color: var(--c-text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  background: var(--c-bg-subtle);
+  border-color: var(--c-border-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+.export-row {
+  display: flex;
+  gap: 8px;
+}
+
+.export-row button {
+  flex: 1;
+  font-size: 12px;
+  padding: 8px;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--c-bg-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.progress .label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.progress .bar {
+  height: 4px;
+  background: var(--c-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress .bar > div {
+  height: 100%;
+  background: var(--c-accent);
+  transition: width 0.3s ease-out;
+}
+
+.progress .bar.indeterminate {
+  position: relative;
+}
+
+.progress .bar.indeterminate > div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background: var(--c-accent);
+  animation: indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+  0% {
+    left: -35%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.progress .cancel {
+  margin-top: 2px;
+  background: transparent;
+  border: 1px solid var(--c-border-hover);
+  color: var(--c-text-secondary);
+  padding: 6px 0;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.progress .cancel:hover {
+  color: var(--c-text);
+  border-color: var(--c-border-focus);
+  background: var(--c-bg-surface);
+}
+
+.error {
+  font-size: 12px;
+  color: var(--c-error);
+  background: var(--c-error-bg);
+  border: 1px solid var(--c-error-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.footer {
+  font-size: 10px;
+  color: var(--c-text-muted);
+  text-align: center;
+  padding-top: 4px;
+  border-top: 1px solid var(--c-border-subtle);
+}
+
+.error .dismiss {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--c-error);
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.error .dismiss:hover {
+  color: var(--c-text);
+}
+
+.error {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.error .message {
+  flex: 1;
+}
+
+.tab-warning {
+  font-size: 12px;
+  color: var(--c-text-light);
+  background: var(--c-status-running);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tab-warning .message {
+  line-height: 1.4;
+}
+
+.tab-warning .warning-cta {
+  appearance: none;
+  background: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tab-warning .warning-cta:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+.link-row {
+  display: flex;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.link-muted {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-muted:hover:not(:disabled) {
+  color: var(--c-text-secondary);
+}
+
+.link-muted:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+a:focus-visible,
+.link-muted:focus-visible,
+.error .dismiss:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+.toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--c-bg-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px var(--c-shadow);
+  z-index: 10;
+  animation: toast-slide-up 0.18s ease-out;
+}
+
+.toast-error {
+  border-color: var(--c-toast-error-border);
+  color: var(--c-toast-error-text);
+}
+
+.toast-info {
+  border-color: var(--c-border-hover);
+  color: var(--c-text-light);
+}
+
+@keyframes toast-slide-up {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.theme-toggle {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--c-border);
+  color: var(--c-text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.theme-toggle:hover {
+  background: var(--c-bg-surface);
+  border-color: var(--c-border-hover);
+  color: var(--c-text);
+}

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.vite/
+.vscode/
+.idea/
+coverage/
+.env*
+*.local
+*.stackdump
+.cursor/
+CLAUDE.md
+PUBLISHING.md

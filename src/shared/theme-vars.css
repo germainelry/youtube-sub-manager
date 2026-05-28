@@ -1,0 +1,92 @@
+:root,
+[data-theme='dark'] {
+  --c-bg: #0f0f0f;
+  --c-bg-surface: #1a1a1a;
+  --c-bg-elevated: #181818;
+  --c-bg-hover: #161616;
+  --c-bg-subtle: #1f1f1f;
+
+  --c-text: #ffffff;
+  --c-text-secondary: #aaaaaa;
+  --c-text-tertiary: #888888;
+  --c-text-light: #dddddd;
+  --c-text-muted: #666666;
+  --c-text-disabled: #555555;
+
+  --c-border: #2a2a2a;
+  --c-border-hover: #3a3a3a;
+  --c-border-subtle: #1f1f1f;
+  --c-border-focus: #4a4a4a;
+
+  --c-accent: #ff0033;
+  --c-accent-hover: #e60029;
+  --c-accent-selected: rgba(255, 0, 51, 0.18);
+  --c-accent-selected-hover: rgba(255, 0, 51, 0.24);
+
+  --c-error: #ff6b6b;
+  --c-error-light: #ff8a8a;
+  --c-error-bg: rgba(255, 107, 107, 0.08);
+  --c-error-border: rgba(255, 107, 107, 0.25);
+  --c-toast-error-border: rgba(255, 107, 107, 0.45);
+  --c-toast-error-text: #ffe0e3;
+
+  --c-status-running: #19141a;
+  --c-status-complete: #14201a;
+  --c-status-complete-text: inherit;
+  --c-status-error: #2a1417;
+  --c-status-error-text: #ff8a8a;
+
+  --c-danger-disabled: #401219;
+
+  --c-shadow: rgba(0, 0, 0, 0.5);
+  --c-shadow-light: rgba(0, 0, 0, 0.4);
+  --c-backdrop: rgba(0, 0, 0, 0.65);
+
+  --c-overlay-border: #303030;
+}
+
+[data-theme='light'] {
+  --c-bg: #ffffff;
+  --c-bg-surface: #f5f5f5;
+  --c-bg-elevated: #ffffff;
+  --c-bg-hover: #f0f0f0;
+  --c-bg-subtle: #ebebeb;
+
+  --c-text: #111111;
+  --c-text-secondary: #555555;
+  --c-text-tertiary: #777777;
+  --c-text-light: #333333;
+  --c-text-muted: #999999;
+  --c-text-disabled: #bbbbbb;
+
+  --c-border: #dddddd;
+  --c-border-hover: #cccccc;
+  --c-border-subtle: #eeeeee;
+  --c-border-focus: #aaaaaa;
+
+  --c-accent: #f2003e;
+  --c-accent-hover: #d8002e;
+  --c-accent-selected: rgba(212, 0, 42, 0.1);
+  --c-accent-selected-hover: rgba(212, 0, 42, 0.16);
+
+  --c-error: #cc3333;
+  --c-error-light: #dd4444;
+  --c-error-bg: rgba(204, 51, 51, 0.06);
+  --c-error-border: rgba(204, 51, 51, 0.18);
+  --c-toast-error-border: rgba(204, 51, 51, 0.25);
+  --c-toast-error-text: #7a1a1a;
+
+  --c-status-running: #f3f0f5;
+  --c-status-complete: #edf5f0;
+  --c-status-complete-text: #1a5c2e;
+  --c-status-error: #fdf0f0;
+  --c-status-error-text: #cc3333;
+
+  --c-danger-disabled: #f5d5d8;
+
+  --c-shadow: rgba(0, 0, 0, 0.1);
+  --c-shadow-light: rgba(0, 0, 0, 0.06);
+  --c-backdrop: rgba(0, 0, 0, 0.3);
+
+  --c-overlay-border: #dddddd;
+}
