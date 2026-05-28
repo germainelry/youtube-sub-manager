@@ -2,24 +2,24 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-Chrome extension to find and clean up stale YouTube subscriptions. No API keys, no OAuth -- everything runs locally in your browser.
+Chrome extension to find inactive YouTube subscriptions, track upload activity, and bulk unsubscribe safely. No API keys, no OAuth — everything runs locally in your browser.
 
 ![Dashboard with filters](./docs/screenshots/04-dashboard-filtered-results.png)
 
 ## How It Works
 
-1. **Scan** -- visit your subscriptions page and the extension collects every channel
-2. **Review** -- sort and filter by last upload date to find inactive channels
-3. **Clean up** -- bulk unsubscribe with safety confirmations and automatic backups
+1. **Scan** — visit your subscriptions page and the extension collects every channel
+2. **Track activity** — sort and filter by last upload date to find inactive channels
+3. **Bulk unsubscribe** — safely remove inactive channels with confirmations and automatic backups
 
 ## Features
 
 - **Scan** all your YouTube subscriptions in one click
-- **Check activity** -- see when each channel last uploaded a video
-- **Sort and filter** by last upload date, name, or subscriber count with staleness presets
-- **Bulk unsubscribe** with safety confirmations and automatic backups
+- **Track upload activity** — see when each channel last uploaded a video
+- **Sort and filter** by last upload date, name, or subscriber count with inactivity presets
+- **Bulk unsubscribe safely** with confirmations and automatic backups
 - **Export** your full subscription list as CSV or JSON
-- **100% local** -- your data never leaves your browser
+- **100% local** — your data never leaves your browser
 
 <details>
 <summary>More screenshots</summary>

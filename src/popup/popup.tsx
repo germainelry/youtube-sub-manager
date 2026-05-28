@@ -298,7 +298,9 @@ function Popup() {
           <h1>YouTube Sub Manager</h1>
           <ThemeToggle />
         </div>
-        <span className="subtitle">Scan, review, and clean up your subscriptions</span>
+        <span className="subtitle">
+          Find inactive subscriptions, track activity, and bulk unsubscribe
+        </span>
       </div>
 
       <div className="summary">

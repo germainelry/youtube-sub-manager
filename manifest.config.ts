@@ -5,7 +5,7 @@ export default defineManifest({
   manifest_version: 3,
   name: 'YouTube Sub Manager',
   description:
-    'Scan your YouTube subscriptions, find channels that stopped posting, and bulk-unsubscribe — with backups for safety.',
+    'Find inactive YouTube subscriptions, track upload activity, and bulk unsubscribe safely.',
   version: pkg.version,
   icons: {
     16: 'public/icons/icon-16.png',

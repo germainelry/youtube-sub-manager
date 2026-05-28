@@ -4,10 +4,10 @@
 
 YouTube Sub Manager is a Chrome Manifest V3 extension with four runtime contexts:
 
-1. **Popup** -- small toolbar popup for triggering scans, enrichment, exports
-2. **Dashboard** -- full-page React app for filtering, sorting, selecting, and unsubscribing
-3. **Service Worker** -- background orchestrator for message routing, tab management, and persistence
-4. **Content Script** -- injected into youtube.com for all DOM interaction and network requests
+1. **Popup** — small toolbar popup for triggering scans, enrichment, exports
+2. **Dashboard** — full-page React app for filtering, sorting, selecting, and unsubscribing
+3. **Service Worker** — background orchestrator for message routing, tab management, and persistence
+4. **Content Script** — injected into youtube.com for all DOM interaction and network requests
 
 All DOM interaction and long-running work lives in the content script because MV3 service workers terminate after 30 seconds of inactivity. A long-lived `chrome.runtime.connect` port from the content script keeps the service worker alive during extraction, enrichment, and unsubscribe runs.
 

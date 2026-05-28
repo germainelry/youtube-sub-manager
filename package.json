@@ -2,7 +2,7 @@
   "name": "youtube-sub-manager",
   "version": "0.1.0",
   "private": true,
-  "description": "Chrome extension to find and clean up stale YouTube subscriptions — scan, filter, bulk unsubscribe, export.",
+  "description": "Chrome extension to find inactive YouTube subscriptions, track upload activity, and bulk unsubscribe safely.",
   "license": "MIT",
   "author": "Germaine Luah",
   "homepage": "https://github.com/germainelry/youtube-sub-manager",
