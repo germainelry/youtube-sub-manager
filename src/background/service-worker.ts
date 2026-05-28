@@ -175,7 +175,7 @@ async function dispatchExtractStart(): Promise<void> {
 async function dispatchEnrichStart(): Promise<void> {
   const all = await db().channels.toArray();
   const targets: EnrichmentTarget[] = all
-    .filter((c) => !isFreshEnrichment(c.enrichedAt))
+    .filter((c) => !c.unsubscribedAt && !isFreshEnrichment(c.enrichedAt))
     .map((c) => ({ channelId: c.channelId, resolvedUcid: c.resolvedUcid }));
 
   if (targets.length === 0) {
@@ -687,7 +687,7 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
       void (async () => {
         try {
           const rows = await db().channels.toArray();
-          const pendingCount = rows.filter((c) => !isFreshEnrichment(c.enrichedAt)).length;
+          const pendingCount = rows.filter((c) => !c.unsubscribedAt && !isFreshEnrichment(c.enrichedAt)).length;
           sendResponse({
             action: 'enrich:status:reply',
             data: {
