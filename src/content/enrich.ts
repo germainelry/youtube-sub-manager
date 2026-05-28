@@ -24,13 +24,24 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 const jitterMs = (): number =>
   DISPATCH_JITTER_MIN_MS + Math.random() * (DISPATCH_JITTER_MAX_MS - DISPATCH_JITTER_MIN_MS);
 
-async function fetchWithTimeout(url: string, ms: number, init?: RequestInit): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  ms: number,
+  init?: RequestInit,
+  externalSignal?: AbortSignal,
+): Promise<Response> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
+  const onExternalAbort = (): void => ctrl.abort();
+  externalSignal?.addEventListener('abort', onExternalAbort);
   try {
+    if (externalSignal?.aborted) {
+      throw new DOMException('Enrichment cancelled', 'AbortError');
+    }
     return await fetch(url, { credentials: 'omit', ...init, signal: ctrl.signal });
   } finally {
     clearTimeout(timer);
+    externalSignal?.removeEventListener('abort', onExternalAbort);
   }
 }
 
@@ -41,12 +52,18 @@ interface ChannelFetchOutcome {
   videoCount?: number;
 }
 
-async function fetchChannelPage(channelIdOrHandle: string): Promise<ChannelFetchOutcome> {
+async function fetchChannelPage(
+  channelIdOrHandle: string,
+  signal?: AbortSignal,
+): Promise<ChannelFetchOutcome> {
   try {
     const url = channelVideosUrl(channelIdOrHandle);
-    const res = await fetchWithTimeout(url, FETCH_TIMEOUT_MS, {
-      headers: { 'Accept-Language': 'en' },
-    });
+    const res = await fetchWithTimeout(
+      url,
+      FETCH_TIMEOUT_MS,
+      { headers: { 'Accept-Language': 'en' } },
+      signal,
+    );
     if (!res.ok) return { status: 'unreachable' };
     const html = await res.text();
     const data = extractChannelData(html);
@@ -63,15 +80,16 @@ async function fetchChannelPage(channelIdOrHandle: string): Promise<ChannelFetch
       lastUploadAt: data.lastUploadAt,
       videoCount: data.videoCount,
     };
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err;
     return { status: 'unreachable' };
   }
 }
 
-async function enrichOne(target: EnrichmentTarget): Promise<EnrichmentResult> {
+async function enrichOne(target: EnrichmentTarget, signal?: AbortSignal): Promise<EnrichmentResult> {
   const existingUcid = effectiveUcid(target.channelId, target.resolvedUcid);
   const lookupId = existingUcid ?? target.channelId;
-  const outcome = await fetchChannelPage(lookupId);
+  const outcome = await fetchChannelPage(lookupId, signal);
   return {
     channelId: target.channelId,
     resolvedUcid: outcome.ucid,
@@ -106,6 +124,11 @@ export async function enrichAll(
   await showOverlay('Enriching channels');
   updateOverlay(0, 'Starting…');
 
+  const abortController = new AbortController();
+  const cancelPoll = setInterval(() => {
+    if (options.shouldCancel?.()) abortController.abort();
+  }, 500);
+
   const buffer: EnrichmentResult[] = [];
   let cursor = 0;
   const pickNext = (): EnrichmentTarget | undefined => {
@@ -115,16 +138,16 @@ export async function enrichAll(
 
   async function worker(): Promise<void> {
     for (;;) {
-      if (options.shouldCancel?.()) {
+      if (abortController.signal.aborted || options.shouldCancel?.()) {
         throw new DOMException('Enrichment cancelled', 'AbortError');
       }
       const target = pickNext();
       if (!target) return;
       await sleep(jitterMs());
-      if (options.shouldCancel?.()) {
+      if (abortController.signal.aborted || options.shouldCancel?.()) {
         throw new DOMException('Enrichment cancelled', 'AbortError');
       }
-      const result = await enrichOne(target);
+      const result = await enrichOne(target, abortController.signal);
       progress.processed++;
       if (result.enrichmentStatus === 'ok') progress.ok++;
       else if (result.enrichmentStatus === 'no-uploads') progress.noUploads++;
@@ -157,12 +180,21 @@ export async function enrichAll(
     return progress;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
+      if (buffer.length > 0) {
+        const batch = buffer.splice(0, buffer.length);
+        try {
+          await options.onBatch(batch, { ...progress });
+        } catch {
+          /* best effort flush */
+        }
+      }
       throw err;
     }
     const msg = err instanceof Error ? err.message : String(err);
     setOverlayError(msg);
     throw err;
   } finally {
+    clearInterval(cancelPoll);
     setTimeout(removeOverlay, 6000);
   }
 }

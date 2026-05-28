@@ -1,4 +1,4 @@
-import { StrictMode, useCallback, useEffect, useMemo, useState } from 'react';
+import { StrictMode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { db } from '../shared/db';
 import { downloadCSV, downloadJSON } from '../shared/export';
@@ -59,8 +59,18 @@ function Popup() {
   const [lastRun, setLastRun] = useState<ExtractionRun | undefined>();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [tabAvailable, setTabAvailable] = useState(true);
+  const [enrichCancelPending, setEnrichCancelPending] = useState(false);
+  const enrichCancelRef = useRef(false);
 
   const tabContext = useMemo<TabContext>(() => classifyTab(tabUrl), [tabUrl]);
+
+  useEffect(() => {
+    enrichCancelRef.current = enrichCancelPending;
+  }, [enrichCancelPending]);
+
+  useEffect(() => {
+    if (enrichState.kind !== 'enriching') setEnrichCancelPending(false);
+  }, [enrichState.kind]);
 
   const refreshSummary = useCallback(async () => {
     const [count, runs] = await Promise.all([
@@ -134,7 +144,7 @@ function Popup() {
         }
         case 'enrich:progress':
           setEnrichState((prev) => {
-            if (prev.kind === 'complete') return prev;
+            if (prev.kind === 'complete' || enrichCancelRef.current) return prev;
             return { kind: 'enriching', progress: msg.data.progress };
           });
           break;
@@ -182,10 +192,6 @@ function Popup() {
   }, []);
 
   const handleExtract = useCallback(async () => {
-    if (!tabAvailable) {
-      showToast('Open your YouTube subscriptions tab first.', 'info');
-      return;
-    }
     setState({ kind: 'extracting', progress: { loaded: 0 } });
     try {
       const reply = (await sendMessage({ action: 'extract:start' })) as
@@ -198,7 +204,7 @@ function Popup() {
     } catch {
       setState({ kind: 'error', message: 'Extension is reconnecting — please try again.' });
     }
-  }, [tabAvailable]);
+  }, []);
 
   const handleCancel = useCallback(async () => {
     try {
@@ -209,6 +215,7 @@ function Popup() {
   }, []);
 
   const handleCancelEnrich = useCallback(async () => {
+    setEnrichCancelPending(true);
     try {
       await sendMessage({ action: 'enrich:cancel' });
     } catch {
@@ -231,10 +238,6 @@ function Popup() {
   }, []);
 
   const handleEnrich = useCallback(async () => {
-    if (!tabAvailable) {
-      showToast('Open your YouTube subscriptions tab first.', 'info');
-      return;
-    }
     if (pendingCount === 0) {
       showToast('All channels are already up to date.', 'info');
       return;
@@ -257,7 +260,7 @@ function Popup() {
         message: 'Extension is reconnecting — please try again.',
       });
     }
-  }, [tabAvailable, pendingCount]);
+  }, [pendingCount]);
 
   const handleOpenDashboard = useCallback(() => {
     sendMessage({ action: 'dashboard:open' }).catch(() => {
@@ -273,20 +276,22 @@ function Popup() {
     if (!ok) return;
     await db().channels.clear();
     await db().extractions.clear();
+    sendMessage({ action: 'clear:data' }).catch(() => {});
     setChannelCount(0);
     setLastRun(undefined);
     setPendingCount(0);
     setState({ kind: 'idle' });
     setEnrichState({ kind: 'idle' });
+    refreshEnrichStatus();
     showToast('Cleared your saved list.');
-  }, [channelCount]);
+  }, [channelCount, refreshEnrichStatus]);
 
   const dismissExtractError = useCallback(() => setState({ kind: 'idle' }), []);
   const dismissEnrichError = useCallback(() => setEnrichState({ kind: 'idle' }), []);
 
   const busy = state.kind === 'extracting' || enrichState.kind === 'enriching';
-  const extractDisabled = busy || !tabAvailable;
-  const enrichDisabled = busy || channelCount === 0 || !tabAvailable;
+  const extractDisabled = busy;
+  const enrichDisabled = busy || channelCount === 0;
   const exportDisabled = channelCount === 0 || busy;
   const dashboardDisabled = channelCount === 0;
   const clearDisabled = busy || channelCount === 0;
@@ -380,8 +385,8 @@ function Popup() {
               <div />
             </div>
           )}
-          <button className="cancel" onClick={handleCancelEnrich}>
-            Cancel
+          <button className="cancel" onClick={handleCancelEnrich} disabled={enrichCancelPending}>
+            {enrichCancelPending ? 'Stopping…' : 'Cancel'}
           </button>
         </div>
       )}

@@ -777,6 +777,25 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
         .catch(() => sendResponse({ ok: false }));
       return true;
 
+    case 'clear:data':
+      void (async () => {
+        try {
+          await handleExtractCancel().catch(() => {});
+          await handleEnrichCancel().catch(() => {});
+          currentRunId = undefined;
+          currentProgress = undefined;
+          currentExtractTabId = undefined;
+          currentEnrichProgress = undefined;
+          currentEnrichTabId = undefined;
+          await db().channels.clear();
+          await db().extractions.clear();
+        } catch {
+          /* best effort */
+        }
+        sendResponse({ ok: true });
+      })();
+      return true;
+
     default:
       return false;
   }

@@ -60,7 +60,8 @@ export type Message =
   | { action: 'ping' }
   | { action: 'tab:check' }
   | { action: 'tab:check:reply'; data: { found: boolean } }
-  | { action: 'tab:open-subscriptions' };
+  | { action: 'tab:open-subscriptions' }
+  | { action: 'clear:data' };
 
 export type MessageAction = Message['action'];
 
