@@ -46,8 +46,18 @@ const SORT_OPTIONS: Array<{
   group: string;
   description?: string;
 }> = [
-  { value: 'lastUpload:asc+subscriberCount:asc', label: 'Cleanup candidates', group: 'Smart sort', description: 'oldest uploads, fewest subs' },
-  { value: 'subscriberCount:asc+lastUpload:asc', label: 'Small channels first', group: 'Smart sort', description: 'fewest subs, oldest uploads' },
+  {
+    value: 'lastUpload:asc+subscriberCount:asc',
+    label: 'Cleanup candidates',
+    group: 'Smart sort',
+    description: 'oldest uploads, fewest subs',
+  },
+  {
+    value: 'subscriberCount:asc+lastUpload:asc',
+    label: 'Small channels first',
+    group: 'Smart sort',
+    description: 'fewest subs, oldest uploads',
+  },
   { value: 'lastUpload:asc', label: 'Least recent upload first', group: 'By upload date' },
   { value: 'lastUpload:desc', label: 'Most recent upload first', group: 'By upload date' },
   { value: 'name:asc', label: 'Name A → Z', group: 'By name' },
@@ -487,7 +497,11 @@ export function App(): JSX.Element {
           <label className="sort-label">
             <span>Sort by:</span>
             <SortDropdown
-              value={sort.thenBy ? `${sort.key}:${sort.dir}+${sort.thenBy.key}:${sort.thenBy.dir}` : `${sort.key}:${sort.dir}`}
+              value={
+                sort.thenBy
+                  ? `${sort.key}:${sort.dir}+${sort.thenBy.key}:${sort.thenBy.dir}`
+                  : `${sort.key}:${sort.dir}`
+              }
               options={sortOptions}
               onChange={onSortChange}
             />
@@ -663,10 +677,9 @@ export function App(): JSX.Element {
         <div className="unsub-bar paused" role="alert">
           <div className="unsub-bar-content">
             <span className="count">
-              Unsubscribe paused — YouTube tab was closed.{' '}
-              <strong>{unsubState.progress.ok}</strong> unsubscribed so far ·{' '}
-              <strong>{unsubState.remaining.length}</strong> remaining. Open the YouTube
-              subscriptions tab and resume to continue.
+              Unsubscribe paused — YouTube tab was closed. <strong>{unsubState.progress.ok}</strong>{' '}
+              unsubscribed so far · <strong>{unsubState.remaining.length}</strong> remaining. Open
+              the YouTube subscriptions tab and resume to continue.
             </span>
           </div>
           <button className="primary" onClick={handleResumeUnsub}>

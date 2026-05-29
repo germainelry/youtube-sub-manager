@@ -148,9 +148,7 @@ export function SortDropdown({ value, options, onChange }: SortDropdownProps): R
                   }}
                 >
                   {o.label}
-                  {o.description && (
-                    <span className="sort-dropdown-desc">{o.description}</span>
-                  )}
+                  {o.description && <span className="sort-dropdown-desc">{o.description}</span>}
                 </button>
               </div>
             );

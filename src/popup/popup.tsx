@@ -74,7 +74,9 @@ function Popup() {
 
   const refreshSummary = useCallback(async () => {
     const [count, runs] = await Promise.all([
-      db().channels.filter((c) => !c.unsubscribedAt).count(),
+      db()
+        .channels.filter((c) => !c.unsubscribedAt)
+        .count(),
       db().extractions.orderBy('startedAt').reverse().limit(1).toArray(),
     ]);
     setChannelCount(count);

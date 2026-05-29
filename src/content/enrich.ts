@@ -86,7 +86,10 @@ async function fetchChannelPage(
   }
 }
 
-async function enrichOne(target: EnrichmentTarget, signal?: AbortSignal): Promise<EnrichmentResult> {
+async function enrichOne(
+  target: EnrichmentTarget,
+  signal?: AbortSignal,
+): Promise<EnrichmentResult> {
   const existingUcid = effectiveUcid(target.channelId, target.resolvedUcid);
   const lookupId = existingUcid ?? target.channelId;
   const outcome = await fetchChannelPage(lookupId, signal);

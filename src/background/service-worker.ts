@@ -794,7 +794,9 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
       void (async () => {
         try {
           const rows = await db().channels.toArray();
-          const pendingCount = rows.filter((c) => !c.unsubscribedAt && !isFreshEnrichment(c.enrichedAt)).length;
+          const pendingCount = rows.filter(
+            (c) => !c.unsubscribedAt && !isFreshEnrichment(c.enrichedAt),
+          ).length;
           sendResponse({
             action: 'enrich:status:reply',
             data: {
