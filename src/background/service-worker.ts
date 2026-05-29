@@ -672,7 +672,16 @@ async function dispatchUnsubStart(channelIds: string[]): Promise<void> {
   const capped = targets.slice(0, UNSUB_BATCH_CAP);
   const overflowIds = targets.slice(UNSUB_BATCH_CAP).map((t) => t.channelId);
 
-  await createBackup(capped.map((t) => t.channelId));
+  let backupId: number;
+  try {
+    backupId = await createBackup(capped.map((t) => t.channelId));
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`Failed to create backup before unsubscribing: ${detail}`);
+  }
+  chrome.runtime
+    .sendMessage({ action: 'backup:created', data: { backupId } } satisfies Message)
+    .catch(() => {});
 
   const tab = await findOrOpenSubscriptionsTab();
   if (tab.id === undefined) throw new Error('Could not open a YouTube tab.');

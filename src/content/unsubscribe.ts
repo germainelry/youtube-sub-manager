@@ -16,7 +16,7 @@ const JITTER_MS = 500;
 const LONG_BREAK_EVERY = 50;
 const LONG_BREAK_MIN_MS = 5000;
 const LONG_BREAK_MAX_MS = 10000;
-const CONSECUTIVE_ERROR_HALT = 2;
+const CONSECUTIVE_ERROR_HALT = 5;
 
 const MENU_TIMEOUT_MS = 3000;
 const DIALOG_TIMEOUT_MS = 3000;
@@ -36,6 +36,7 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 function isVisible(el: Element | null | undefined): el is HTMLElement {
   if (!(el instanceof HTMLElement)) return false;
   if (el.offsetParent === null) return false;
+  if (getComputedStyle(el).visibility === 'hidden') return false;
   const rect = el.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;
 }
@@ -91,22 +92,31 @@ function findButtonInCard(card: Element, state: SubscribeState): HTMLElement | n
 }
 
 function findUnsubscribeMenuItem(): HTMLElement | null {
-  const selectors = [
-    'tp-yt-paper-item',
-    'ytd-menu-service-item-renderer',
-    'yt-list-item-view-model',
-    'a[role="menuitem"]',
-    'button[role="menuitem"]',
-    'yt-formatted-string',
-    'span',
+  const containerSelectors = [
+    'tp-yt-iron-dropdown',
+    'ytd-menu-popup-renderer',
+    'ytd-popup-container tp-yt-paper-listbox',
   ];
-  for (const sel of selectors) {
-    const items = document.querySelectorAll<HTMLElement>(sel);
-    for (const item of items) {
-      if (!isVisible(item)) continue;
-      const text = (item.textContent ?? '').trim().toLowerCase();
-      if (text === 'unsubscribe' || text.startsWith('unsubscribe ')) {
-        return item;
+  for (const containerSel of containerSelectors) {
+    const containers = document.querySelectorAll<HTMLElement>(containerSel);
+    for (const container of containers) {
+      if (!isVisible(container)) continue;
+      const itemSelectors = [
+        'tp-yt-paper-item',
+        'ytd-menu-service-item-renderer',
+        'yt-list-item-view-model',
+        '[role="menuitem"]',
+        '[role="option"]',
+      ];
+      for (const itemSel of itemSelectors) {
+        const items = container.querySelectorAll<HTMLElement>(itemSel);
+        for (const item of items) {
+          if (!isVisible(item)) continue;
+          const text = (item.textContent ?? '').trim().toLowerCase();
+          if (text === 'unsubscribe' || text.startsWith('unsubscribe ')) {
+            return item;
+          }
+        }
       }
     }
   }
@@ -116,19 +126,27 @@ function findUnsubscribeMenuItem(): HTMLElement | null {
 function findConfirmButton(): HTMLElement | null {
   const dialogSelectors = [
     'tp-yt-paper-dialog',
-    'ytd-confirm-dialog-renderer',
     'yt-confirm-dialog-renderer',
+    'ytd-confirm-dialog-renderer',
     '[role="dialog"]',
+    '[role="alertdialog"]',
   ];
   for (const dialogSel of dialogSelectors) {
     const dialogs = document.querySelectorAll<HTMLElement>(dialogSel);
     for (const dialog of dialogs) {
       if (!isVisible(dialog)) continue;
+
+      const ariaBtn = dialog.querySelector<HTMLElement>('button[aria-label="Unsubscribe" i]');
+      if (ariaBtn && isVisible(ariaBtn)) return ariaBtn;
+
       const idMatch = dialog.querySelector<HTMLElement>(
-        'tp-yt-paper-button#confirm-button, yt-button-renderer#confirm-button button, #confirm-button button',
+        '#confirm-button button, tp-yt-paper-button#confirm-button, yt-button-renderer#confirm-button button',
       );
       if (idMatch && isVisible(idMatch)) return idMatch;
-      const buttons = dialog.querySelectorAll<HTMLElement>('button, tp-yt-paper-button');
+
+      const buttons = dialog.querySelectorAll<HTMLElement>(
+        'button, tp-yt-paper-button, yt-button-shape button',
+      );
       for (const btn of buttons) {
         if (!isVisible(btn)) continue;
         const text = (btn.textContent ?? '').trim().toLowerCase();
@@ -166,6 +184,18 @@ interface UnsubAttempt {
   detail?: string;
 }
 
+function dismissStalePopups(): void {
+  const dropdown = document.querySelector<HTMLElement>('tp-yt-iron-dropdown');
+  if (dropdown && isVisible(dropdown)) {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  }
+  const dialog = document.querySelector<HTMLElement>('tp-yt-paper-dialog');
+  if (dialog && isVisible(dialog)) {
+    const cancelBtn = dialog.querySelector<HTMLElement>('button[aria-label="Cancel" i]');
+    if (cancelBtn) cancelBtn.click();
+  }
+}
+
 async function unsubCard(card: HTMLElement): Promise<UnsubAttempt> {
   const subscribed = findButtonInCard(card, 'subscribed');
   if (!subscribed) {
@@ -177,25 +207,42 @@ async function unsubCard(card: HTMLElement): Promise<UnsubAttempt> {
 
   subscribed.click();
 
-  const menuItem = await waitFor(findUnsubscribeMenuItem, MENU_TIMEOUT_MS);
-  if (!menuItem) {
+  const menuOrDialog = await waitFor(() => {
+    const menu = findUnsubscribeMenuItem();
+    if (menu) return { kind: 'menu' as const, el: menu };
+    const confirm = findConfirmButton();
+    if (confirm) return { kind: 'dialog' as const, el: confirm };
+    return null;
+  }, MENU_TIMEOUT_MS);
+
+  if (!menuOrDialog) {
     return {
       outcome: 'error',
-      detail: "Unsubscribe option didn't appear after clicking Subscribed.",
+      detail:
+        'Neither unsubscribe menu nor confirmation dialog appeared after clicking Subscribed.',
     };
   }
-  menuItem.click();
 
-  const confirmBtn = await waitFor(findConfirmButton, DIALOG_TIMEOUT_MS);
-  if (!confirmBtn) {
-    return { outcome: 'error', detail: 'Confirmation dialog did not appear.' };
+  if (menuOrDialog.kind === 'dialog') {
+    if (detectCaptcha()) {
+      return { outcome: 'halted', detail: 'Captcha detected before confirming unsubscribe.' };
+    }
+    menuOrDialog.el.click();
+  } else {
+    menuOrDialog.el.click();
+
+    const confirmBtn = await waitFor(findConfirmButton, DIALOG_TIMEOUT_MS);
+    if (!confirmBtn) {
+      return {
+        outcome: 'error',
+        detail: 'Confirmation dialog did not appear after clicking Unsubscribe menu item.',
+      };
+    }
+    if (detectCaptcha()) {
+      return { outcome: 'halted', detail: 'Captcha detected before confirming unsubscribe.' };
+    }
+    confirmBtn.click();
   }
-
-  if (detectCaptcha()) {
-    return { outcome: 'halted', detail: 'Captcha appeared after menu click.' };
-  }
-
-  confirmBtn.click();
 
   const flipped = await waitFor(() => {
     if (!document.contains(card)) return 'detached';
@@ -273,6 +320,8 @@ export async function unsubBatchOnPage(options: UnsubBatchOptions): Promise<Unsu
         }
         break;
       }
+
+      dismissStalePopups();
 
       let result: UnsubResult;
       const card = findCardForChannelId(target.channelId);

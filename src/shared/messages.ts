@@ -55,6 +55,7 @@ export type Message =
       action: 'unsub:status:reply';
       data: { running: boolean; progress?: UnsubProgress };
     }
+  | { action: 'backup:created'; data: { backupId: number } }
   | { action: 'dashboard:open' }
   | { action: 'export:csv' }
   | { action: 'export:json' }

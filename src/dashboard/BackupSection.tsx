@@ -42,6 +42,19 @@ export function BackupSection(): JSX.Element {
     }
   }, [expanded, backups]);
 
+  useEffect(() => {
+    const onMessage = (raw: unknown): void => {
+      const msg = raw as { action?: string };
+      if (msg.action === 'backup:created') {
+        listBackups()
+          .then(setBackups)
+          .catch(() => setBackups([]));
+      }
+    };
+    chrome.runtime.onMessage.addListener(onMessage);
+    return () => chrome.runtime.onMessage.removeListener(onMessage);
+  }, []);
+
   return (
     <div className="backup-section">
       <button
