@@ -12,3 +12,5 @@ coverage/
 .cursor/
 CLAUDE.md
 PUBLISHING.md
+releases/
+*.zip

@@ -31,6 +31,7 @@ let unsubProgress: UnsubProgress | undefined;
 let unsubBatchId: string | undefined;
 let unsubTabId: number | undefined;
 let unsubOverflow: string[] = [];
+let unsubTargetIds: string[] = [];
 
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== KEEPALIVE_PORT) return;
@@ -41,6 +42,9 @@ chrome.runtime.onConnect.addListener((port) => {
     if (currentEnrichProgress !== undefined && currentEnrichTabId !== undefined) {
       void handleEnrichTabClosed();
     }
+    if (unsubRunning && unsubTabId !== undefined) {
+      void handleUnsubTabClosed();
+    }
   });
 });
 
@@ -50,6 +54,9 @@ chrome.tabs.onRemoved.addListener((tabId: number) => {
   }
   if (currentEnrichTabId !== undefined && tabId === currentEnrichTabId) {
     void handleEnrichTabClosed();
+  }
+  if (unsubTabId !== undefined && tabId === unsubTabId) {
+    void handleUnsubTabClosed();
   }
 });
 
@@ -131,6 +138,18 @@ async function ensureContentScriptInjected(tabId: number): Promise<void> {
   }
 }
 
+async function assertTabIsSubscriptions(tabId: number): Promise<void> {
+  let tab: chrome.tabs.Tab;
+  try {
+    tab = await chrome.tabs.get(tabId);
+  } catch {
+    throw new Error('YouTube tab was closed.');
+  }
+  if (!tab.url?.startsWith(SUBSCRIPTIONS_URL)) {
+    throw new Error('YouTube page navigated away from subscriptions.');
+  }
+}
+
 async function waitForTabComplete(tabId: number, timeoutMs = 15_000): Promise<void> {
   const tab = await chrome.tabs.get(tabId);
   if (tab.status === 'complete') return;
@@ -153,8 +172,24 @@ async function waitForTabComplete(tabId: number, timeoutMs = 15_000): Promise<vo
 }
 
 async function dispatchExtractStart(): Promise<void> {
+  if (currentRunId !== undefined) {
+    const staleRunId = currentRunId;
+    currentRunId = undefined;
+    currentProgress = undefined;
+    currentExtractTabId = undefined;
+    await db()
+      .extractions.update(staleRunId, {
+        completedAt: Date.now(),
+        status: 'error',
+        errorMessage: 'Interrupted by a new scan.',
+      })
+      .catch(() => {});
+  }
+
   const tab = await findOrOpenSubscriptionsTab();
   if (tab.id === undefined) throw new Error('Could not open a YouTube tab.');
+
+  currentExtractTabId = tab.id;
 
   const run = await db().extractions.add({
     startedAt: Date.now(),
@@ -162,13 +197,23 @@ async function dispatchExtractStart(): Promise<void> {
     status: 'running',
   });
   currentRunId = typeof run === 'number' ? run : Number(run);
-  currentProgress = { loaded: 0 };
+  currentProgress = { loaded: 0, phase: 'setup' };
+
+  chrome.runtime
+    .sendMessage({
+      action: 'extract:progress',
+      data: { channels: [], progress: { loaded: 0, phase: 'setup' } },
+    } satisfies Message)
+    .catch(() => {});
 
   await waitForTabComplete(tab.id);
   if (currentRunId === undefined) return;
+  await assertTabIsSubscriptions(tab.id);
+
   await ensureContentScriptInjected(tab.id);
   if (currentRunId === undefined) return;
-  currentExtractTabId = tab.id;
+  await assertTabIsSubscriptions(tab.id);
+
   await sendToTabWithRetry(tab.id, { action: 'extract:start' });
 }
 
@@ -538,6 +583,7 @@ async function handleUnsubComplete(
   unsubBatchId = undefined;
   unsubTabId = undefined;
   unsubOverflow = [];
+  unsubTargetIds = [];
 }
 
 async function handleUnsubError(message: string): Promise<void> {
@@ -551,6 +597,62 @@ async function handleUnsubError(message: string): Promise<void> {
   unsubBatchId = undefined;
   unsubTabId = undefined;
   unsubOverflow = [];
+  unsubTargetIds = [];
+}
+
+async function handleUnsubTabClosed(): Promise<void> {
+  if (!unsubRunning) return;
+
+  const remaining: string[] = [];
+  if (unsubBatchId) {
+    const loggedIds = new Set(
+      (await db().unsubLog.where('batchId').equals(unsubBatchId).toArray()).map(
+        (row) => row.channelId,
+      ),
+    );
+    const seen = new Set<string>();
+    for (const id of unsubTargetIds) {
+      if (!loggedIds.has(id) && !seen.has(id)) {
+        seen.add(id);
+        remaining.push(id);
+      }
+    }
+    for (const id of unsubOverflow) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        remaining.push(id);
+      }
+    }
+  }
+
+  const savedProgress = unsubProgress ? { ...unsubProgress } : undefined;
+
+  unsubRunning = false;
+  unsubProgress = undefined;
+  unsubBatchId = undefined;
+  unsubTabId = undefined;
+  unsubOverflow = [];
+  unsubTargetIds = [];
+
+  chrome.runtime
+    .sendMessage({
+      action: 'unsub:paused',
+      data: {
+        progress: savedProgress ?? {
+          processed: 0,
+          total: 0,
+          ok: 0,
+          alreadyUnsubbed: 0,
+          unreachable: 0,
+          error: 0,
+          halted: 0,
+        },
+        remaining,
+      },
+    } satisfies Message)
+    .catch(() => {
+      /* dashboard may be closed */
+    });
 }
 
 async function dispatchUnsubStart(channelIds: string[]): Promise<void> {
@@ -582,6 +684,7 @@ async function dispatchUnsubStart(channelIds: string[]): Promise<void> {
   unsubBatchId = batchId;
   unsubTabId = tab.id;
   unsubOverflow = overflowIds;
+  unsubTargetIds = capped.map((t) => t.channelId);
   unsubProgress = {
     processed: 0,
     total: capped.length,
@@ -599,9 +702,13 @@ async function dispatchUnsubStart(channelIds: string[]): Promise<void> {
 }
 
 function forwardUnsubCancel(): void {
-  if (!unsubRunning || unsubTabId === undefined) return;
+  if (!unsubRunning) return;
+  if (unsubTabId === undefined) {
+    void handleUnsubTabClosed();
+    return;
+  }
   chrome.tabs.sendMessage(unsubTabId, { action: 'unsub:cancel' } satisfies Message).catch(() => {
-    /* tab may have closed */
+    void handleUnsubTabClosed();
   });
 }
 
@@ -787,6 +894,12 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
           currentExtractTabId = undefined;
           currentEnrichProgress = undefined;
           currentEnrichTabId = undefined;
+          unsubRunning = false;
+          unsubProgress = undefined;
+          unsubBatchId = undefined;
+          unsubTabId = undefined;
+          unsubOverflow = [];
+          unsubTargetIds = [];
           await db().channels.clear();
           await db().extractions.clear();
         } catch {
@@ -800,6 +913,25 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
       return false;
   }
 });
+
+async function cleanupStaleExtractions(): Promise<void> {
+  try {
+    const staleRuns = await db().extractions.where('status').equals('running').toArray();
+    for (const run of staleRuns) {
+      if (run.id !== undefined) {
+        await db().extractions.update(run.id, {
+          completedAt: Date.now(),
+          status: 'error',
+          errorMessage: 'Interrupted — browser ended the background process.',
+        });
+      }
+    }
+  } catch {
+    /* best effort */
+  }
+}
+
+void cleanupStaleExtractions();
 
 chrome.runtime.onInstalled.addListener(() => {
   /* placeholder for first-run setup */

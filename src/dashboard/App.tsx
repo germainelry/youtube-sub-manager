@@ -21,6 +21,7 @@ import {
 type UnsubState =
   | { kind: 'idle' }
   | { kind: 'running'; progress: UnsubProgress }
+  | { kind: 'paused'; progress: UnsubProgress; remaining: string[] }
   | { kind: 'complete'; progress: UnsubProgress; remaining: string[]; durationMs: number }
   | { kind: 'error'; message: string };
 
@@ -223,6 +224,13 @@ export function App(): JSX.Element {
           });
           refresh();
           return;
+        case 'unsub:paused':
+          setUnsubState({
+            kind: 'paused',
+            progress: msg.data.progress,
+            remaining: msg.data.remaining,
+          });
+          return;
         case 'unsub:error':
           setUnsubState({ kind: 'error', message: msg.data.message });
           return;
@@ -351,8 +359,45 @@ export function App(): JSX.Element {
   }, [selectedChannels]);
 
   const handleCancelUnsub = useCallback(() => {
+    if (unsubState.kind === 'paused') {
+      setUnsubState({ kind: 'idle' });
+      setUnsubErrors([]);
+      return;
+    }
     void sendMessage({ action: 'unsub:cancel' });
-  }, []);
+  }, [unsubState.kind]);
+
+  const handleResumeUnsub = useCallback(async () => {
+    if (unsubState.kind !== 'paused') return;
+    const found = await checkSubscriptionsTab();
+    setTabAvailable(found);
+    if (!found) return;
+    const ids = unsubState.remaining;
+    if (ids.length === 0) {
+      setUnsubState({ kind: 'idle' });
+      return;
+    }
+    setUnsubErrors([]);
+    setUnsubState({
+      kind: 'running',
+      progress: {
+        processed: 0,
+        total: Math.min(ids.length, 200),
+        ok: 0,
+        alreadyUnsubbed: 0,
+        unreachable: 0,
+        error: 0,
+        halted: 0,
+      },
+    });
+    const reply = (await sendMessage({
+      action: 'unsub:start',
+      data: { channelIds: ids },
+    })) as { ok: true } | { ok: false; error: string } | undefined;
+    if (reply && reply.ok === false) {
+      setUnsubState({ kind: 'error', message: reply.error });
+    }
+  }, [unsubState]);
 
   const handleDismissUnsubSummary = useCallback(() => {
     setUnsubState({ kind: 'idle' });
@@ -608,6 +653,23 @@ export function App(): JSX.Element {
             </div>
           )}
           <button onClick={handleCancelUnsub}>Stop</button>
+        </div>
+      )}
+
+      {unsubState.kind === 'paused' && (
+        <div className="unsub-bar paused" role="alert">
+          <div className="unsub-bar-content">
+            <span className="count">
+              Unsubscribe paused — YouTube tab was closed.{' '}
+              <strong>{unsubState.progress.ok}</strong> unsubscribed so far ·{' '}
+              <strong>{unsubState.remaining.length}</strong> remaining. Open the YouTube
+              subscriptions tab and resume to continue.
+            </span>
+          </div>
+          <button className="primary" onClick={handleResumeUnsub}>
+            Resume
+          </button>
+          <button onClick={handleCancelUnsub}>Dismiss</button>
         </div>
       )}
 

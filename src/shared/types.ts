@@ -33,7 +33,7 @@ export interface ExtractionProgress {
   loaded: number;
   total?: number;
   current?: string;
-  phase?: 'scrolling' | 'parsing';
+  phase?: 'scrolling' | 'parsing' | 'setup';
 }
 
 export interface EnrichmentProgress {

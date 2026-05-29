@@ -48,6 +48,7 @@ export type Message =
       data: { progress: UnsubProgress; durationMs: number; remaining: string[] };
     }
   | { action: 'unsub:error'; data: { message: string } }
+  | { action: 'unsub:paused'; data: { progress: UnsubProgress; remaining: string[] } }
   | { action: 'unsub:cancel' }
   | { action: 'unsub:status' }
   | {

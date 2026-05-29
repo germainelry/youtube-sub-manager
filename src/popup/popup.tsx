@@ -324,16 +324,20 @@ function Popup() {
         <div className="progress" role="status" aria-live="polite">
           <div className="label">
             <span>
-              {state.progress.phase === 'parsing'
-                ? 'Reading your subscriptions…'
-                : 'Loading channels…'}
+              {state.progress.phase === 'setup'
+                ? 'Preparing scan…'
+                : state.progress.phase === 'parsing'
+                  ? 'Reading your subscriptions…'
+                  : 'Loading channels…'}
             </span>
-            <span>
-              {state.progress.loaded.toLocaleString()}
-              {state.progress.phase === 'parsing' && state.progress.total
-                ? ` of ${state.progress.total.toLocaleString()}`
-                : ''}
-            </span>
+            {state.progress.phase !== 'setup' && (
+              <span>
+                {state.progress.loaded.toLocaleString()}
+                {state.progress.phase === 'parsing' && state.progress.total
+                  ? ` of ${state.progress.total.toLocaleString()}`
+                  : ''}
+              </span>
+            )}
           </div>
           {state.progress.phase === 'parsing' &&
           state.progress.total &&

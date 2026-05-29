@@ -419,6 +419,11 @@ body {
   color: var(--c-status-complete-text);
 }
 
+.unsub-bar.paused {
+  background: var(--c-status-running);
+  border-left: 3px solid var(--c-accent);
+}
+
 .unsub-bar.error {
   background: var(--c-status-error);
   color: var(--c-status-error-text);
@@ -465,6 +470,18 @@ body {
 .unsub-bar button:hover {
   background: var(--c-border);
   border-color: var(--c-border-hover);
+}
+
+.unsub-bar button.primary {
+  background: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.unsub-bar button.primary:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
 }
 
 .unsub-bar-content {
