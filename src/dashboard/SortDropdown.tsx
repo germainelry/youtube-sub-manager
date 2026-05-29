@@ -4,6 +4,7 @@ interface SortOption {
   value: string;
   label: string;
   group: string;
+  description?: string;
 }
 
 interface SortDropdownProps {
@@ -147,6 +148,9 @@ export function SortDropdown({ value, options, onChange }: SortDropdownProps): R
                   }}
                 >
                   {o.label}
+                  {o.description && (
+                    <span className="sort-dropdown-desc">{o.description}</span>
+                  )}
                 </button>
               </div>
             );

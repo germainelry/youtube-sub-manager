@@ -132,6 +132,43 @@ describe('applySort', () => {
     const out = applySort(channels, { key: 'subscriberCount', dir: 'desc' });
     expect(out.map((c) => c.channelId)).toEqual(['c', 'a', 'b']);
   });
+
+  it('uses thenBy to break ties on primary key', () => {
+    const tied: Channel[] = [
+      makeChannel({ channelId: 'x', name: 'X', subscriberCountRaw: 500, lastUploadAt: NOW - 90 * DAY }),
+      makeChannel({ channelId: 'y', name: 'Y', subscriberCountRaw: 100, lastUploadAt: NOW - 90 * DAY }),
+      makeChannel({ channelId: 'z', name: 'Z', subscriberCountRaw: 300, lastUploadAt: NOW - 90 * DAY }),
+    ];
+    const out = applySort(tied, {
+      key: 'lastUpload',
+      dir: 'asc',
+      thenBy: { key: 'subscriberCount', dir: 'asc' },
+    });
+    expect(out.map((c) => c.channelId)).toEqual(['y', 'z', 'x']);
+  });
+
+  it('ignores thenBy when primary key resolves order', () => {
+    const out = applySort(channels, {
+      key: 'lastUpload',
+      dir: 'asc',
+      thenBy: { key: 'subscriberCount', dir: 'asc' },
+    });
+    expect(out.map((c) => c.channelId)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('sub-sorts undefined lastUpload channels by thenBy key', () => {
+    const mixed: Channel[] = [
+      makeChannel({ channelId: 'p', name: 'P', subscriberCountRaw: 800 }),
+      makeChannel({ channelId: 'q', name: 'Q', subscriberCountRaw: 200 }),
+      makeChannel({ channelId: 'r', name: 'R', subscriberCountRaw: 5000, lastUploadAt: NOW - 30 * DAY }),
+    ];
+    const out = applySort(mixed, {
+      key: 'lastUpload',
+      dir: 'asc',
+      thenBy: { key: 'subscriberCount', dir: 'asc' },
+    });
+    expect(out.map((c) => c.channelId)).toEqual(['r', 'q', 'p']);
+  });
 });
 
 describe('formatUploadLabel', () => {

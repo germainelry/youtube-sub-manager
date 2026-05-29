@@ -83,7 +83,7 @@ export function ChannelTable({
         <span>Subscribers</span>
         <span>
           Last upload
-          {enrichmentEmpty && <span className="header-hint">run Check for activity</span>}
+          {enrichmentEmpty && <span className="header-hint">{'→'} Requires activity check</span>}
         </span>
         <span></span>
       </div>

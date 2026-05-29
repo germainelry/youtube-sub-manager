@@ -171,6 +171,14 @@ body {
   background: var(--c-accent-selected-hover);
 }
 
+.sort-dropdown-desc {
+  display: block;
+  font-size: 11px;
+  color: var(--c-text-tertiary);
+  font-weight: normal;
+  margin-top: 1px;
+}
+
 .toolbar label.inline {
   display: inline-flex;
   align-items: center;

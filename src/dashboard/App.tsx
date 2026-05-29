@@ -41,10 +41,13 @@ const DEFAULT_FILTER: FilterState = {
 const DEFAULT_SORT: SortState = { key: 'lastUpload', dir: 'asc' };
 
 const SORT_OPTIONS: Array<{
-  value: `${SortKey}:asc` | `${SortKey}:desc`;
+  value: string;
   label: string;
   group: string;
+  description?: string;
 }> = [
+  { value: 'lastUpload:asc+subscriberCount:asc', label: 'Cleanup candidates', group: 'Smart sort', description: 'oldest uploads, fewest subs' },
+  { value: 'subscriberCount:asc+lastUpload:asc', label: 'Small channels first', group: 'Smart sort', description: 'fewest subs, oldest uploads' },
   { value: 'lastUpload:asc', label: 'Least recent upload first', group: 'By upload date' },
   { value: 'lastUpload:desc', label: 'Most recent upload first', group: 'By upload date' },
   { value: 'name:asc', label: 'Name A → Z', group: 'By name' },
@@ -444,20 +447,23 @@ export function App(): JSX.Element {
   const sortOptions = useMemo(
     () =>
       enrichedCount === 0
-        ? SORT_OPTIONS.map((o) =>
+        ? SORT_OPTIONS.filter((o) => o.group !== 'Smart sort').map((o) =>
             o.group === 'By upload date' ? { ...o, group: 'Needs activity check' } : o,
           )
         : SORT_OPTIONS,
     [enrichedCount],
   );
 
-  const onSortChange = useCallback(
-    (val: string) => {
-      const [key, dir] = val.split(':') as [SortKey, 'asc' | 'desc'];
+  const onSortChange = useCallback((val: string) => {
+    const parts = val.split('+') as [string, string?];
+    const [key, dir] = parts[0].split(':') as [SortKey, 'asc' | 'desc'];
+    if (parts[1]) {
+      const [thenKey, thenDir] = parts[1].split(':') as [SortKey, 'asc' | 'desc'];
+      setSort({ key, dir, thenBy: { key: thenKey, dir: thenDir } });
+    } else {
       setSort({ key, dir });
-    },
-    [],
-  );
+    }
+  }, []);
 
   return (
     <>
@@ -481,7 +487,7 @@ export function App(): JSX.Element {
           <label className="sort-label">
             <span>Sort by:</span>
             <SortDropdown
-              value={`${sort.key}:${sort.dir}`}
+              value={sort.thenBy ? `${sort.key}:${sort.dir}+${sort.thenBy.key}:${sort.thenBy.dir}` : `${sort.key}:${sort.dir}`}
               options={sortOptions}
               onChange={onSortChange}
             />

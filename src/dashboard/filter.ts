@@ -14,6 +14,7 @@ export type SortDir = 'asc' | 'desc';
 export interface SortState {
   key: SortKey;
   dir: SortDir;
+  thenBy?: { key: SortKey; dir: SortDir };
 }
 
 export function daysSinceUpload(
@@ -49,32 +50,35 @@ export function applyFilter(
   });
 }
 
-export function applySort(channels: Channel[], sort: SortState): Channel[] {
-  const dir = sort.dir === 'asc' ? 1 : -1;
-  const sorted = [...channels];
-  switch (sort.key) {
+function compareByKey(a: Channel, b: Channel, key: SortKey, dir: SortDir): number {
+  const d = dir === 'asc' ? 1 : -1;
+  switch (key) {
     case 'name':
-      sorted.sort((a, b) => a.name.localeCompare(b.name) * dir);
-      break;
-    case 'subscriberCount':
-      sorted.sort((a, b) => {
-        const av = a.subscriberCountRaw ?? -1;
-        const bv = b.subscriberCountRaw ?? -1;
-        return (av - bv) * dir;
-      });
-      break;
+      return a.name.localeCompare(b.name) * d;
+    case 'subscriberCount': {
+      const av = a.subscriberCountRaw ?? -1;
+      const bv = b.subscriberCountRaw ?? -1;
+      return (av - bv) * d;
+    }
     case 'lastUpload':
-    default:
-      sorted.sort((a, b) => {
-        const av = a.lastUploadAt;
-        const bv = b.lastUploadAt;
-        if (av === undefined && bv === undefined) return 0;
-        if (av === undefined) return 1;
-        if (bv === undefined) return -1;
-        return (av - bv) * dir;
-      });
-      break;
+    default: {
+      const av = a.lastUploadAt;
+      const bv = b.lastUploadAt;
+      if (av === undefined && bv === undefined) return 0;
+      if (av === undefined) return 1;
+      if (bv === undefined) return -1;
+      return (av - bv) * d;
+    }
   }
+}
+
+export function applySort(channels: Channel[], sort: SortState): Channel[] {
+  const sorted = [...channels];
+  sorted.sort((a, b) => {
+    const primary = compareByKey(a, b, sort.key, sort.dir);
+    if (primary !== 0 || !sort.thenBy) return primary;
+    return compareByKey(a, b, sort.thenBy.key, sort.thenBy.dir);
+  });
   return sorted;
 }
 
