@@ -14,3 +14,8 @@ CLAUDE.md
 PUBLISHING.md
 releases/
 *.zip
+docs/screenshots/chrome-attachments-1280x800/01-scan-subscriptions-page.png
+docs/screenshots/chrome-attachments-1280x800/02-check-for-activity-completed.png
+docs/screenshots/chrome-attachments-1280x800/02-check-for-activity-in-progress.png
+docs/screenshots/chrome-attachments-1280x800/03-dashboard-filter.png
+docs/screenshots/chrome-attachments-1280x800/04-unsubscribe-confirmation.png
