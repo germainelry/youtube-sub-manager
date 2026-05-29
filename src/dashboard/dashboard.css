@@ -47,8 +47,7 @@ body {
   letter-spacing: -0.01em;
 }
 
-.toolbar input[type='search'],
-.toolbar select {
+.toolbar input[type='search'] {
   appearance: none;
   background: var(--c-bg-surface);
   border: 1px solid var(--c-border);
@@ -56,16 +55,12 @@ body {
   border-radius: 8px;
   padding: 8px 12px;
   font: inherit;
-}
-
-.toolbar input[type='search'] {
   flex: 1;
   min-width: 220px;
   max-width: 480px;
 }
 
-.toolbar input[type='search']:focus,
-.toolbar select:focus {
+.toolbar input[type='search']:focus {
   outline: none;
   border-color: var(--c-border-focus);
 }
@@ -78,32 +73,102 @@ body {
   font-size: 13px;
 }
 
-.toolbar .select-wrap {
+/* --- Sort dropdown (custom) --- */
+
+.sort-dropdown {
   position: relative;
   display: inline-block;
 }
 
-.toolbar .select-wrap::after {
-  content: '';
+.sort-dropdown-trigger {
+  appearance: none;
+  background: var(--c-bg-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  border-radius: 8px;
+  padding: 8px 32px 8px 12px;
+  font: inherit;
+  min-width: 200px;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+
+.sort-dropdown-trigger:hover {
+  border-color: var(--c-border-hover);
+}
+
+.sort-dropdown-trigger:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+.sort-dropdown-trigger[aria-expanded='true'] {
+  border-color: var(--c-border-focus);
+}
+
+.sort-dropdown-chevron {
   position: absolute;
   right: 12px;
   top: 50%;
   width: 8px;
   height: 8px;
-  pointer-events: none;
   border-right: 2px solid var(--c-text-secondary);
   border-bottom: 2px solid var(--c-text-secondary);
   transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
 }
 
-.toolbar .select-wrap select {
-  min-width: 200px;
-  padding-right: 32px;
+.sort-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  background: var(--c-bg-elevated);
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px var(--c-shadow);
+  padding: 4px;
+  z-index: 100;
+}
+
+.sort-dropdown-group {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-tertiary);
+  font-weight: 500;
+}
+
+.sort-dropdown-option {
+  appearance: none;
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--c-text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
   cursor: pointer;
 }
 
-.toolbar .select-wrap select:hover {
-  border-color: var(--c-border-hover);
+.sort-dropdown-option:hover,
+.sort-dropdown-option.focused {
+  background: var(--c-bg-hover);
+}
+
+.sort-dropdown-option.selected {
+  background: var(--c-accent-selected);
+  font-weight: 500;
+}
+
+.sort-dropdown-option.selected:hover,
+.sort-dropdown-option.selected.focused {
+  background: var(--c-accent-selected-hover);
 }
 
 .toolbar label.inline {
@@ -1022,4 +1087,23 @@ body {
   background: var(--c-bg-surface);
   border-color: var(--c-border-hover);
   color: var(--c-text);
+}
+
+/* --- Focus-visible outlines (dashboard) --- */
+
+.toolbar input:focus-visible,
+.stale-chip:focus-visible,
+.selection-bar button:focus-visible,
+.unsub-bar button:focus-visible,
+.enrich-bar button:focus-visible,
+.modal-actions button:focus-visible,
+.confirm-input input:focus-visible,
+.row a.open:focus-visible,
+.backup-download:focus-visible,
+.backup-toggle:focus-visible,
+.theme-toggle:focus-visible,
+.tab-warning button:focus-visible,
+.empty-cta:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
 }

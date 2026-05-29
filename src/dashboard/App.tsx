@@ -9,6 +9,7 @@ import { BackupSection } from './BackupSection';
 import { ChannelTable } from './ChannelTable';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SelectionBar } from './SelectionBar';
+import { SortDropdown } from './SortDropdown';
 import {
   applyFilter,
   applySort,
@@ -39,13 +40,17 @@ const DEFAULT_FILTER: FilterState = {
 
 const DEFAULT_SORT: SortState = { key: 'lastUpload', dir: 'asc' };
 
-const SORT_OPTIONS: Array<{ value: `${SortKey}:asc` | `${SortKey}:desc`; label: string }> = [
-  { value: 'lastUpload:asc', label: 'Least recent upload first' },
-  { value: 'lastUpload:desc', label: 'Most recent upload first' },
-  { value: 'name:asc', label: 'Name A → Z' },
-  { value: 'name:desc', label: 'Name Z → A' },
-  { value: 'subscriberCount:desc', label: 'Most subscribers first' },
-  { value: 'subscriberCount:asc', label: 'Fewest subscribers first' },
+const SORT_OPTIONS: Array<{
+  value: `${SortKey}:asc` | `${SortKey}:desc`;
+  label: string;
+  group: string;
+}> = [
+  { value: 'lastUpload:asc', label: 'Least recent upload first', group: 'By upload date' },
+  { value: 'lastUpload:desc', label: 'Most recent upload first', group: 'By upload date' },
+  { value: 'name:asc', label: 'Name A → Z', group: 'By name' },
+  { value: 'name:desc', label: 'Name Z → A', group: 'By name' },
+  { value: 'subscriberCount:desc', label: 'Most subscribers first', group: 'By subscribers' },
+  { value: 'subscriberCount:asc', label: 'Fewest subscribers first', group: 'By subscribers' },
 ];
 
 const STALENESS_LABEL = (days: number): string => {
@@ -436,10 +441,23 @@ export function App(): JSX.Element {
     setEnrichState({ kind: 'idle' });
   }, []);
 
-  const onSortChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
-    const [key, dir] = event.target.value.split(':') as [SortKey, 'asc' | 'desc'];
-    setSort({ key, dir });
-  };
+  const sortOptions = useMemo(
+    () =>
+      enrichedCount === 0
+        ? SORT_OPTIONS.map((o) =>
+            o.group === 'By upload date' ? { ...o, group: 'Needs activity check' } : o,
+          )
+        : SORT_OPTIONS,
+    [enrichedCount],
+  );
+
+  const onSortChange = useCallback(
+    (val: string) => {
+      const [key, dir] = val.split(':') as [SortKey, 'asc' | 'desc'];
+      setSort({ key, dir });
+    },
+    [],
+  );
 
   return (
     <>
@@ -462,32 +480,11 @@ export function App(): JSX.Element {
           />
           <label className="sort-label">
             <span>Sort by:</span>
-            <span className="select-wrap">
-              <select value={`${sort.key}:${sort.dir}`} onChange={onSortChange}>
-                {enrichedCount === 0 ? (
-                  <>
-                    <optgroup label="Needs activity check">
-                      {SORT_OPTIONS.filter((o) => o.value.startsWith('lastUpload:')).map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                    {SORT_OPTIONS.filter((o) => !o.value.startsWith('lastUpload:')).map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </>
-                ) : (
-                  SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))
-                )}
-              </select>
-            </span>
+            <SortDropdown
+              value={`${sort.key}:${sort.dir}`}
+              options={sortOptions}
+              onChange={onSortChange}
+            />
           </label>
           <span className="stats">
             Showing <strong>{sorted.length.toLocaleString()}</strong>
