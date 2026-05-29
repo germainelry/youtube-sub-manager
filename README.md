@@ -4,7 +4,7 @@
 
 Chrome extension to find inactive YouTube subscriptions, track upload activity, and bulk unsubscribe safely. No API keys, no OAuth — everything runs locally in your browser.
 
-![Dashboard with filters](./docs/screenshots/04-dashboard-filtered-results.png)
+![Dashboard filtered to inactive channels with bulk selection](./docs/screenshots/03-dashboard-filter.png)
 
 ## How It Works
 
@@ -25,16 +25,16 @@ Chrome extension to find inactive YouTube subscriptions, track upload activity, 
 <summary>More screenshots</summary>
 
 ### Scan your subscriptions
-![Scan](./docs/screenshots/01-scan-subscriptions-page.png)
+![Popup open on YouTube subscriptions page, scanning channels](./docs/screenshots/01-scan-subscriptions-page.png)
 
-### Popup controls
-![Popup](./docs/screenshots/02-popup-ready-to-scan.png)
+### Check for activity (in progress)
+![Dashboard showing activity check running, 12 of 32 channels checked](./docs/screenshots/02-check-for-activity-in-progress.png)
 
-### Enrichment progress
-![Enrichment](./docs/screenshots/03-enrichment-progress.png)
+### Check for activity (completed)
+![Dashboard after activity check with last upload dates for all channels](./docs/screenshots/02-check-for-activity-completed.png)
 
 ### Unsubscribe confirmation
-![Unsubscribe](./docs/screenshots/05-unsubscribe-confirmation.png)
+![Type UNSUB confirmation dialog before bulk unsubscribe](./docs/screenshots/04-unsubscribe-confirmation.png)
 
 </details>
 
